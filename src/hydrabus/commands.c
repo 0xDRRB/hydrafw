@@ -67,6 +67,7 @@ const t_token_dict tl_dict[] = {
 	{ T_CS_OFF, "cs-off" },
 	{ T_PINS, "pins" },
 	{ T_READ, "read" },
+	{ T_TREAD, "tread" },
 	{ T_WRITE, "write" },
 	{ T_START, "start" },
 	{ T_STOP, "stop" },
@@ -163,6 +164,7 @@ const t_token_dict tl_dict[] = {
 	{ T_CONVENTION, "convention" },
 	{ T_DELAY, "delay" },
 	{ T_CLOCK_STRETCH, "clock-stretch" },
+	{ T_TIMEOUT, "timeout" },
 	/* Developer warning add new command(s) here */
 
 	/* BP-compatible commands */
@@ -604,6 +606,11 @@ t_token tokens_uart[] = {
 		.arg_type = T_ARG_UINT,\
 		.help = "Communication convention",\
 		.help_full = "Set communication convention (0=normal, 1=inverse)"\
+	},\
+	{\
+		T_TIMEOUT,\
+		.arg_type = T_ARG_UINT,\
+		.help = "Read timeout in msec",\
 	},
 
 t_token tokens_mode_smartcard[] = {
@@ -623,6 +630,11 @@ t_token tokens_mode_smartcard[] = {
 		T_READ,
 		.flags = T_FLAG_SUFFIX_TOKEN_DELIM_INT,
 		.help = "Read byte (repeat with :<num>)"
+	},
+	{
+		T_TREAD,
+		.flags = T_FLAG_SUFFIX_TOKEN_DELIM_INT,
+		.help = "Read byte with timeout (repeat with :<num>)"
 	},
 	{
 		T_HD,

@@ -63,6 +63,7 @@ static void init_proto_default(t_hydra_console *con)
 	proto->config.smartcard.dev_guardtime = 16;
 	proto->config.smartcard.dev_phase = 0;
 	proto->config.smartcard.dev_convention = DEV_CONVENTION_NORMAL;
+	proto->config.smartcard.dev_timeout = 10000;
 }
 
 static void show_params(t_hydra_console *con)
@@ -83,6 +84,9 @@ static void show_params(t_hydra_console *con)
 		proto->config.smartcard.dev_prescaler);
 	print_freq(con, bsp_smartcard_get_clk_frequency(proto->dev_num));
 	cprint(con, "\r\n", 2);
+
+	cprintf(con, "Timeout: %d msec\r\n",
+		proto->config.smartcard.dev_timeout);
 }
 
 static int init(t_hydra_console *con, t_tokenline_parsed *p)
@@ -424,6 +428,16 @@ static int exec(t_hydra_console *con, t_tokenline_parsed *p, int token_pos)
 				return t;
 			}
 			break;
+		case T_TIMEOUT:
+			/* Integer parameter. */
+			t += 2;
+			memcpy(&arg_int, p->buf + p->tokens[t], sizeof(int));
+			if (arg_int < 0 || arg_int > 30000) {
+				cprintf(con, "Timeout value must be set between 0 and 30000.\r\n");
+				return t;
+			}
+			proto->config.smartcard.dev_timeout = arg_int;
+			break;
 		case T_QUERY:
 			smartcard_get_card_status(con);
 			break;
@@ -484,6 +498,29 @@ static uint32_t read(t_hydra_console *con, uint8_t *rx_data, uint8_t nb_data)
 		}
 	}
 	return status;
+}
+
+static uint32_t tread(t_hydra_console *con, uint8_t *rx_data, uint8_t nb_data)
+{
+	uint8_t nb_rdata, i;
+	mode_config_proto_t* proto = &con->mode->proto;
+
+	nb_rdata = bsp_smartcard_read_u8_timeout(proto->dev_num, rx_data, nb_data, TIME_MS2I(proto->config.smartcard.dev_timeout));
+
+	if(!nb_rdata)
+		return BSP_ERROR;
+
+	apply_convention(con, rx_data, nb_rdata);
+	if(nb_rdata == 1) {
+		cprintf(con, hydrabus_mode_str_read_one_u8, rx_data[0]);
+	} else {
+		cprintf(con, hydrabus_mode_str_mul_read);
+		for(i = 0; i < nb_rdata; i++) {
+			cprintf(con, hydrabus_mode_str_mul_value_u8, rx_data[i]);
+		}
+		cprintf(con, hydrabus_mode_str_mul_br);
+	}
+	return BSP_OK;
 }
 
 static uint32_t dump(t_hydra_console *con, uint8_t *rx_data, uint8_t nb_data)
@@ -550,12 +587,12 @@ static const char *get_prompt(t_hydra_console *con)
 	return str_prompt_smartcard[proto->dev_num];
 }
 
-
 const mode_exec_t mode_smartcard_exec = {
 	.init = &init,
 	.exec = &exec,
 	.write = &write,
 	.read = &read,
+	.tread = &tread,
 	.dump = &dump,
 	.write_read = &write_read,
 	.cleanup = &cleanup,

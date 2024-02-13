@@ -35,6 +35,8 @@ static int hydrabus_mode_write(t_hydra_console *con, t_tokenline_parsed *p,
 			       int token_pos);
 static int hydrabus_mode_read(t_hydra_console *con, t_tokenline_parsed *p,
 			      int token_pos);
+static int hydrabus_mode_tread(t_hydra_console *con, t_tokenline_parsed *p,
+			      int token_pos);
 static int hydrabus_mode_hexdump(t_hydra_console *con, t_tokenline_parsed *p,
 			      int token_pos);
 
@@ -249,6 +251,9 @@ int cmd_mode_exec(t_hydra_console *con, t_tokenline_parsed *p)
 		case T_READ:
 			t += hydrabus_mode_read(con, p, t);
 			break;
+		case T_TREAD:
+			t += hydrabus_mode_tread(con, p, t);
+			break;
 		case T_HD:
 			t += hydrabus_mode_hexdump(con, p, t);
 			break;
@@ -448,6 +453,34 @@ static int hydrabus_mode_read(t_hydra_console *con, t_tokenline_parsed *p,
 	mode_status = !HYDRABUS_MODE_STATUS_OK;
 	if(con->mode->exec->read != NULL) {
 		mode_status = con->mode->exec->read(con, p_proto->buffer_rx, count);
+	}
+	if (mode_status != HYDRABUS_MODE_STATUS_OK)
+		hydrabus_mode_read_error(con, mode_status);
+
+	return t - token_pos;
+}
+
+/* Returns the number of tokens eaten. */
+static int hydrabus_mode_tread(t_hydra_console *con, t_tokenline_parsed *p,
+			      int token_pos)
+{
+	mode_config_proto_t* p_proto;
+	uint32_t mode_status;
+	int count, t;
+
+	p_proto = &con->mode->proto;
+
+	t = token_pos;
+	if (p->tokens[t + 1] == T_ARG_TOKEN_SUFFIX_INT) {
+		t += 2;
+		memcpy(&count, p->buf + p->tokens[t], sizeof(int));
+	} else {
+		count = 1;
+	}
+
+	mode_status = !HYDRABUS_MODE_STATUS_OK;
+	if(con->mode->exec->tread != NULL) {
+		mode_status = con->mode->exec->tread(con, p_proto->buffer_rx, count);
 	}
 	if (mode_status != HYDRABUS_MODE_STATUS_OK)
 		hydrabus_mode_read_error(con, mode_status);

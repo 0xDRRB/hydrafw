@@ -59,6 +59,7 @@ enum {
 	T_CS_OFF,
 	T_PINS,
 	T_READ,
+	T_TREAD,
 	T_WRITE,
 	T_START,
 	T_STOP,
@@ -155,6 +156,7 @@ enum {
 	T_CONVENTION,
 	T_DELAY,
 	T_CLOCK_STRETCH,
+	T_TIMEOUT,
 	/* Developer warning add new command(s) here */
 
 	/* BP-compatible commands */

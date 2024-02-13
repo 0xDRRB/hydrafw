@@ -81,6 +81,7 @@ typedef struct {
 	uint8_t dev_polarity;
 	uint8_t dev_phase;
 	uint8_t dev_convention;
+	uint32_t dev_timeout;
 } smartcard_config_t;
 
 typedef struct {
